@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> To-Do List</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        :root {
+            --theme-color: #ed3a3a;
+            --theme-hover: #d92828;
+            --gradient-start: #ed3a3a;
+            --gradient-end: #EC4899;
+        }
+
+        body {
+            min-height: 100vh;
+            transition: all 0.5s ease;
+            background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #39567e;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(224, 187, 187, 0.644);
+            backdrop-filter: blur(10px);
+            transition: all 0.5s ease;
+        }
+
+        body.dark::before {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgb(12, 94, 99);
+            z-index: 10;
+        }
+
+        .dark .theme-toggle {
+            background: rgba(30, 61, 104, 0.9);
+            color: #ffe600;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(10deg);
+        }
+
+        .todo-app {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.5s;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dark .todo-app {
+            background: rgba(31, 41, 55, 0.9);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .app-header {
+            padding: 3rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://images.unsplash.com/photo-1519834785169-98be25ec3f84?auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            opacity: 0.1;
+            mix-blend-mode: overlay;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .motivation-text {
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+            position: relative;
+            font-size: 1.1rem;
+        }
+
+        .input-section {
+            padding: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .todo-input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: white;
+            color: #1f2937;
+        }
+
+        .date-input {
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background-color: white;
+            color: #1f2937;
+            min-width: 150px;
+            cursor: pointer;
+        }
+
+        .dark .todo-input,
+        .dark .date-input {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: white;
+        }
+
+        .todo-input:focus,
+        .date-input:focus {
+            outline: none;
+            border-color: var(--theme-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .add-button {
+            padding: 1.2rem 2.5rem;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            border-radius: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15);
+        }
+
+        .todo-list {
+            padding: 2rem;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            border-radius: 1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+        }
+
+        .dark .todo-item {
+            background: rgba(55, 65, 81, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .todo-item:nth-child(3n+1) {
+            background-image: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1));
+        }
+
+        .todo-item:nth-child(3n+2) {
+            background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+        }
+
+        .todo-item:nth-child(3n+3) {
+            background-image: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1));
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .todo-item.completed {
+            opacity: 0.7;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+        }
+
+        .dark .todo-item.completed {
+            background: linear-gradient(135deg, rgba(6, 95, 70, 0.4), rgba(4, 120, 87, 0.4));
+        }
+
+        .todo-checkbox {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 1rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            color: #1f2937;
+        }
+
+        .dark .todo-text {
+            color: #f3f4f6;
+        }
+
+        .completed .todo-text {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .delete-button {
+            padding: 0.7rem;
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+            border: none;
+            border-radius: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            opacity: 0.8;
+        }
+
+        .delete-button:hover {
+            opacity: 1;
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .date-badge {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin-right: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+            font-style: italic;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 1rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .dark .empty-state {
+            background: rgba(0, 0, 0, 0.2);
+            color: #9ca3af;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            margin: 0 auto;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle">
+        <svg class="icon moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg class="icon sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+    </button>
+
+    <div class="container">
+        <div class="todo-app">
+            <div class="app-header">
+                <h1 class="app-title">My Daily Tasks</h1>
+                <p class="motivation-text" id="motivationText">Loading motivation...</p>
+            </div>
+            <div class="input-section">
+                <div class="input-group">
+                    <input type="text" class="todo-input" id="todoInput" placeholder="What do you want to accomplish?">
+                    <input type="date" class="date-input" id="dateInput">
+                </div>
+                <button class="add-button" id="addButton">Add Task</button>
+            </div>
+            <div class="todo-list" id="todoList">
+                <div class="empty-state">No tasks yet. Add one to get started!</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const motivationalQuotes = [
+            "The only way to do great work is to love what you do.",
+            "Small progress is still progress.",
+            "Done is better than perfect.",
+            "Focus on being productive instead of busy.",
+            "Your future self will thank you.",
+            "Make today count!",
+            "Every accomplishment starts with the decision to try.",
+            "Take it one task at a time."
+        ];
+
+        const dailyThemes = [
+            { 
+                color: '#7C3AED',
+                hover: '#6D28D9',
+                gradientStart: '#7C3AED',
+                gradientEnd: '#EC4899'
+            },
+            { 
+                color: '#06B6D4',
+                hover: '#0891B2',
+                gradientStart: '#06B6D4',
+                gradientEnd: '#3B82F6'
+            },
+            { 
+                color: '#10B981',
+                hover: '#059669',
+                gradientStart: '#10B981',
+                gradientEnd: '#6366F1'
+            },
+            { 
+                color: '#F59E0B',
+                hover: '#D97706',
+                gradientStart: '#F59E0B',
+                gradientEnd: '#EF4444'
+            },
+            { 
+                color: '#EC4899',
+                hover: '#DB2777',
+                gradientStart: '#EC4899',
+                gradientEnd: '#8B5CF6'
+            },
+            { 
+                color: '#6366F1',
+                hover: '#4F46E5',
+                gradientStart: '#6366F1',
+                gradientEnd: '#EC4899'
+            },
+            { 
+                color: '#EF4444',
+                hover: '#DC2626',
+                gradientStart: '#EF4444',
+                gradientEnd: '#F59E0B'
+            }
+        ];
+
+        const themeToggle = document.getElementById('themeToggle');
+        const moonIcon = themeToggle.querySelector('.moon');
+        const sunIcon = themeToggle.querySelector('.sun');
+        const todoInput = document.getElementById('todoInput');
+        const addButton = document.getElementById('addButton');
+        const todoList = document.getElementById('todoList');
+        const motivationText = document.getElementById('motivationText');
+
+        function setDailyTheme() {
+            const today = new Date().getDay();
+            const theme = dailyThemes[today];
+            document.documentElement.style.setProperty('--theme-color', theme.color);
+            document.documentElement.style.setProperty('--theme-hover', theme.hover);
+            document.documentElement.style.setProperty('--gradient-start', theme.gradientStart);
+            document.documentElement.style.setProperty('--gradient-end', theme.gradientEnd);
+        }
+
+        function updateMotivation() {
+            const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+            motivationText.textContent = randomQuote;
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            moonIcon.style.display = document.body.classList.contains('dark') ? 'none' : 'block';
+            sunIcon.style.display = document.body.classList.contains('dark') ? 'block' : 'none';
+            saveTodos();
+        });
+
+        function addTodo() {
+            const text = todoInput.value.trim();
+            const dateValue = document.getElementById('dateInput').value;
+            
+            if (text) {
+                const todo = {
+                    id: Date.now(),
+                    text,
+                    completed: false,
+                    date: dateValue ? new Date(dateValue).toLocaleDateString() : new Date().toLocaleDateString()
+                };
+                createTodoElement(todo);
+                todoInput.value = '';
+                document.getElementById('dateInput').value = '';
+                updateEmptyState();
+                saveTodos();
+            }
+        }
+
+        addButton.addEventListener('click', addTodo);
+        todoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTodo();
+        });
+
+        function createTodoElement(todo) {
+            const emptyState = todoList.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const todoItem = document.createElement('div');
+            todoItem.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+            todoItem.dataset.id = todo.id;
+
+            const dateBadge = document.createElement('span');
+            dateBadge.className = 'date-badge';
+            dateBadge.textContent = todo.date;
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'todo-checkbox';
+            checkbox.checked = todo.completed;
+
+            const text = document.createElement('span');
+            text.className = 'todo-text';
+            text.textContent = todo.text;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-button';
+            deleteButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>';
+
+            todoItem.appendChild(dateBadge);
+            todoItem.appendChild(checkbox);
+            todoItem.appendChild(text);
+            todoItem.appendChild(deleteButton);
+
+            checkbox.addEventListener('change', () => {
+                todoItem.classList.toggle('completed');
+                saveTodos();
+            });
+
+            deleteButton.addEventListener('click', () => {
+                todoItem.style.transform = 'translateX(100%)';
+                todoItem.style.opacity = '0';
+                setTimeout(() => {
+                    todoItem.remove();
+                    updateEmptyState();
+                    saveTodos();
+                }, 300);
+            });
+
+            todoList.appendChild(todoItem);
+        }
+
+        function updateEmptyState() {
+            if (todoList.children.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.textContent = 'No tasks yet. Add one to get started!';
+                todoList.appendChild(emptyState);
+            }
+        }
+
+        function saveTodos() {
+            const todos = Array.from(todoList.querySelectorAll('.todo-item')).map(item => ({
+                id: item.dataset.id,
+                text: item.querySelector('.todo-text').textContent,
+                completed: item.querySelector('.todo-checkbox').checked,
+                date: item.querySelector('.date-badge').textContent
+            }));
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+
+        function loadTodos() {
+            const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+            todos.forEach(todo => createTodoElement(todo));
+            updateEmptyState();
+        }
+
+        document.getElementById('dateInput').valueAsDate = new Date();
+
+        setDailyTheme();
+        updateMotivation();
+        loadTodos();
+
+        setInterval(updateMotivation, 10000);
+    </script>
+</body>
+</html>
